@@ -14,13 +14,15 @@
   var store = load();
 
   function load() {
-    var blank = { name: '', best: {}, records: [], badges: {}, cleared: {} };
+    var blank = { name: '', cls: '', no: '', best: {}, records: [], badges: {}, cleared: {} };
     try {
       var raw = localStorage.getItem(STORE_KEY);
       if (!raw) return blank;
       var o = JSON.parse(raw);
       return {
         name: o.name || '',
+        cls: o.cls || '',
+        no: o.no || '',
         best: o.best || {},
         records: o.records || [],
         badges: o.badges || {},
@@ -40,7 +42,8 @@
       tapmsg = $('tapmsg'), progbar = $('progbar'),
       comboEl = $('combo'), comboN = $('combo-n'),
       sKpm = $('s-kpm'), sAcc = $('s-acc'), sPrg = $('s-prg'), sTm = $('s-tm'),
-      resultEl = $('result'), whoInput = $('who');
+      resultEl = $('result'), whoInput = $('who'),
+      clsInput = $('wclass'), noInput = $('wno'), syncMsg = $('sync-msg');
 
   /* ── 상태 ─────────────────────────────────────────── */
   var lv = 0, queue = [], idx = 0, target = '', prevLen = 0,
@@ -153,8 +156,67 @@
     sAcc.parentElement.className = 'st' + (keys > 4 ? (a >= 95 ? ' good' : (a < 85 ? ' bad' : '')) : '');
   }
 
+  /* ── 입력 모드 점검 (한/영 · CapsLock) ─────────────
+     한글 IME 상태를 직접 읽는 표준 API 는 없다. 그래서
+       · CapsLock → keydown 의 getModifierState 로 미리 안다
+       · 한글      → 실제로 한글이 들어온 순간 감지한다
+     둘 중 하나라도 걸리면 채점도 타이머도 시작하지 않는다.
+     잘못된 입력 모드 때문에 정확도가 깎이면 안 되기 때문이다. */
+  // 한글 자모 · 호환 자모 · 확장 A/B · 완성형 음절.
+  // 코드포인트로 직접 적는다 (글꼴/편집기에 따라 문자가 깨질 수 있으므로)
+  var HANGUL = /[ᄀ-ᇿ㄰-㆏ꥠ-꥿가-힣ힰ-퟿]/;
+  var capsOn = false, imeSeen = false;
+  var guardEl = $('guard');
+
+  function paintGuard() {
+    var msg = '';
+    if (imeSeen) msg = '⌨  한글 입력 상태입니다. <b>한/영</b> 키를 눌러 영문으로 바꾸세요.';
+    else if (capsOn) msg = '⌨  <b>Caps Lock</b> 이 켜져 있습니다. 꺼서 소문자로 맞춰 주세요.';
+    if (msg) {
+      guardEl.innerHTML = msg;
+      guardEl.hidden = false;
+      pad.classList.add('locked');
+    } else {
+      guardEl.hidden = true;
+      pad.classList.remove('locked');
+    }
+  }
+
+  function checkCaps(e) {
+    if (!e.getModifierState) return;
+    var on = e.getModifierState('CapsLock');
+    if (on !== capsOn) { capsOn = on; paintGuard(); }
+  }
+  document.addEventListener('keydown', checkCaps);
+  document.addEventListener('keyup', checkCaps);
+
+  // IME 조합이 시작되면 곧바로 한글 모드로 본다
+  field.addEventListener('compositionstart', function () {
+    imeSeen = true; paintGuard();
+  });
+
   /* ── 입력 ─────────────────────────────────────────── */
-  field.addEventListener('input', function () {
+  field.addEventListener('input', function (e) {
+    // 한글이 한 글자라도 들어오면 지우고 경고만 띄운다 (오타로 세지 않는다)
+    if (HANGUL.test(field.value) || (e && e.isComposing)) {
+      imeSeen = true;
+      field.value = field.value.replace(new RegExp(HANGUL.source, 'g'), '');
+      prevLen = field.value.length;
+      paintGuard();
+      render();
+      return;
+    }
+    if (imeSeen) { imeSeen = false; paintGuard(); }   // 영문으로 돌아옴
+
+    if (capsOn) {
+      // 새로 들어온 글자만 되돌린다. 지우는 것(백스페이스)은 막지 않는다.
+      if (field.value.length > prevLen) field.value = field.value.slice(0, prevLen);
+      else prevLen = field.value.length;
+      paintGuard();
+      render();
+      return;
+    }
+
     if (!started) {
       started = Date.now();
       timer = setInterval(tick, 200);
@@ -223,7 +285,9 @@
     clearInterval(timer); timer = null;
     var L = LEVELS[lv];
     var sec = (Date.now() - started) / 1000;
-    var kpm = Math.round(doneChars / (sec / 60));
+    // 경과 시간이 0에 가까우면 타수가 폭발한다. 사람이 낼 수 있는 값으로 묶는다.
+    // (서버의 kpm <= 2000 제약과도 맞춘다 — 안 그러면 저장이 영원히 거부된다)
+    var kpm = Math.min(2000, Math.round(doneChars / (Math.max(sec, 1) / 60)));
     var acc = accuracy();
     var grade = gradeOf(kpm, acc, L.par);
 
@@ -295,6 +359,7 @@
     resultEl.classList.add('on');
     sPrg.innerHTML = queue.length + '<i> / ' + queue.length + '</i>';
     paintLevels(); paintBadges(); paintRecords();
+    sendToServer(r, L);
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
@@ -383,11 +448,81 @@
     save(); paintLevels(); paintBadges(); paintRecords();
   });
 
-  whoInput.value = store.name;
+  /* ── 신원 (반 · 학번 · 이름) ──────────────────────── */
+  var CFG = (typeof TL_CONFIG !== 'undefined') ? TL_CONFIG : {};
+  var syncOn = (typeof TLSync !== 'undefined') && TLSync.enabled();
+
+  (function initIdentity() {
+    var classes = CFG.classes || [];
+    if (!syncOn || !classes.length) {
+      $('wclass-wrap').style.display = 'none';
+    } else {
+      classes.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        clsInput.appendChild(o);
+      });
+      clsInput.value = store.cls || '';
+    }
+    if (!syncOn || CFG.askStudentNo === false) $('wno-wrap').style.display = 'none';
+    else noInput.value = store.no || '';
+
+    whoInput.value = store.name;
+    $('whohint').textContent = syncOn
+      ? '한 번만 입력하면 계속 기억합니다'
+      : '이 브라우저에만 저장됩니다';
+    if (!syncOn) $('privacy').textContent = '기록과 이름은 이 브라우저에만 저장됩니다.';
+    else $('privacy').textContent =
+      '이름·반·학번과 연습 결과가 선생님께 전달됩니다. 그 외의 정보는 수집하지 않습니다.';
+  })();
+
   whoInput.addEventListener('input', function () {
-    store.name = whoInput.value.trim().slice(0, 12);
-    save();
+    store.name = whoInput.value.trim().slice(0, 12); save();
   });
+  clsInput.addEventListener('change', function () { store.cls = clsInput.value; save(); });
+  noInput.addEventListener('input', function () {
+    store.no = noInput.value.trim().slice(0, 8); save();
+  });
+
+  function sendToServer(r, L) {
+    if (!syncOn) { syncMsg.textContent = ''; return; }
+    if (!store.name || !store.cls) {
+      syncMsg.className = 'sync warn';
+      syncMsg.textContent = '▸ 반과 이름을 입력하면 이 기록이 선생님께 전달됩니다. (지금은 전달되지 않았습니다)';
+      return;
+    }
+    syncMsg.className = 'sync';
+    syncMsg.textContent = '기록 보내는 중…';
+    TLSync.send({
+      class_code: store.cls,
+      student_name: store.name,
+      student_no: store.no || null,
+      level_id: L.id,
+      level_name: L.name,
+      grade: r.grade,
+      kpm: r.kpm,
+      accuracy: r.acc,
+      errors: r.errors,
+      best_combo: r.bestCombo,
+      seconds: Math.max(1, r.seconds),
+      chars: r.chars
+    }).then(function (state) {
+      if (state === 'sent') {
+        syncMsg.className = 'sync ok';
+        syncMsg.textContent = '✓ 선생님께 기록이 전달되었습니다.';
+      } else if (state === 'queued') {
+        syncMsg.className = 'sync warn';
+        syncMsg.textContent = '▸ 인터넷이 불안정합니다. 기록을 보관해 두었다가 다음에 자동으로 보냅니다.';
+      } else if (state === 'rejected') {
+        syncMsg.className = 'sync warn';
+        syncMsg.textContent = '▸ 이 기록은 저장되지 않았습니다. 선생님께 말씀해 주세요.';
+      } else {
+        syncMsg.textContent = '';
+      }
+    });
+  }
+
+  if (syncOn) TLSync.flush();
 
   pad.addEventListener('click', function () { field.focus(); });
   field.addEventListener('focus', function () { pad.classList.add('focus'); });

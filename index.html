@@ -17,9 +17,19 @@
     <h1>VPython <span class="a">Typing</span> Lab</h1>
     <p class="intro">다음 주부터 이 단어들을 하루에 수백 번 칩니다. <b>코드에서 제일 많이 틀리는 건 알파벳이 아니라 <span class="mono">( ) . _ =</span> 같은 기호입니다.</b> 그래서 기호까지 같이 칩니다.</p>
     <div class="whoami">
-      <label for="who">이름</label>
-      <input id="who" type="text" maxlength="12" placeholder="결과 화면에 표시됩니다" autocomplete="off" spellcheck="false">
-      <span class="whohint">이 브라우저에만 저장됩니다</span>
+      <span class="wfield" id="wclass-wrap">
+        <label for="wclass">반</label>
+        <select id="wclass"><option value="">선택</option></select>
+      </span>
+      <span class="wfield" id="wno-wrap">
+        <label for="wno">학번</label>
+        <input id="wno" type="text" maxlength="8" inputmode="numeric" placeholder="10315" autocomplete="off" spellcheck="false">
+      </span>
+      <span class="wfield">
+        <label for="who">이름</label>
+        <input id="who" type="text" maxlength="12" placeholder="홍길동" autocomplete="off" spellcheck="false">
+      </span>
+      <span class="whohint" id="whohint">한 번만 입력하면 계속 기억합니다</span>
     </div>
   </header>
 
@@ -39,6 +49,8 @@
       <span class="c-n" id="combo-n">0</span>
       <span class="c-l">COMBO</span>
     </div>
+
+    <p class="guard" id="guard" role="status" aria-live="assertive" hidden></p>
 
     <p class="target" id="target"></p>
     <input id="field" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="여기에 입력하세요">
@@ -85,6 +97,8 @@
       <button class="btn" id="next-level" type="button">다음 단계 도전</button>
     </div>
 
+    <p class="sync" id="sync-msg"></p>
+
     <p class="shot"><b>이 화면을 캡처해서 내 폴더에 저장하세요.</b> <span class="mono">Win + Shift + S</span> — 학기 말에 다시 재서 얼마나 늘었는지 봅니다.</p>
   </section>
 
@@ -103,12 +117,14 @@
   <footer class="foot">
     <p><b>왜 이 단어들인가?</b> 전부 VPython 코드에 실제로 나오는 것들입니다. 뜻은 다음 주에 배웁니다 — 오늘은 <b>손가락만 익히면 됩니다.</b></p>
     <p>타수는 1분당 친 글자 수입니다. 정확도가 95% 아래면 속도보다 <b>정확도를 먼저</b> 올리세요. 아무리 빨라도 정확도가 낮으면 등급이 올라가지 않습니다.</p>
-    <p class="meta">기록과 이름은 이 브라우저에만 저장되며 어디로도 전송되지 않습니다. · <a href="https://github.com/unono915/VPython_Typing_Lab">GitHub</a></p>
+    <p class="meta" id="privacy">기록과 이름은 이 브라우저에만 저장됩니다.</p>
   </footer>
 
 </div>
 
+<script src="assets/js/config.js"></script>
 <script src="assets/js/data.js"></script>
+<script src="assets/js/sync.js"></script>
 <script src="assets/js/app.js"></script>
 </body>
 </html>

@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>교사용 · VPython Typing Lab</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/teacher.css">
+</head>
+<body>
+
+<div class="wrap wide">
+
+  <!-- 로그인 -->
+  <section class="login" id="login">
+    <div class="top">
+      <p class="tag">VPython Typing Lab · 교사용</p>
+      <h1>학생 기록 <span class="a">대시보드</span></h1>
+      <p class="intro">학생 기록은 <b>로그인한 교사만</b> 볼 수 있습니다. 학생은 기록을 남기기만 할 뿐, 자기 기록조차 다시 읽을 수 없습니다.</p>
+    </div>
+
+    <form class="login-form" id="login-form" autocomplete="on">
+      <label for="email">이메일</label>
+      <input id="email" type="email" required autocomplete="username" placeholder="teacher@example.com">
+      <label for="pw">비밀번호</label>
+      <input id="pw" type="password" required autocomplete="current-password">
+      <button class="btn pri" type="submit" id="login-btn">로그인</button>
+      <p class="err" id="login-err"></p>
+    </form>
+
+    <details class="setup">
+      <summary>처음이신가요? 계정 만드는 법</summary>
+      <ol>
+        <li>Supabase 대시보드 → 이 프로젝트 → <b>Authentication → Users</b></li>
+        <li><b>Add user</b> → <b>Create new user</b></li>
+        <li>이메일과 비밀번호를 <b>직접</b> 정해서 입력하고, <b>Auto Confirm User</b> 를 켠 뒤 저장</li>
+        <li>그 계정으로 이 페이지에서 로그인</li>
+      </ol>
+      <p>비밀번호는 선생님만 아셔야 하므로 직접 정하세요. 계정은 하나면 충분합니다.</p>
+    </details>
+  </section>
+
+  <!-- 대시보드 -->
+  <section class="dash" id="dash" hidden>
+
+    <header class="dash-head">
+      <div>
+        <p class="tag">VPython Typing Lab · 교사용</p>
+        <h1>학생 기록</h1>
+      </div>
+      <div class="dash-act">
+        <span class="who-badge" id="who-badge"></span>
+        <button class="btn" id="reload" type="button">새로고침</button>
+        <button class="btn" id="logout" type="button">로그아웃</button>
+      </div>
+    </header>
+
+    <div class="filters">
+      <span class="f">
+        <label for="f-class">반</label>
+        <select id="f-class"><option value="">전체</option></select>
+      </span>
+      <span class="f">
+        <label for="f-level">단계</label>
+        <select id="f-level">
+          <option value="">전체</option>
+          <option value="words">낱말</option>
+          <option value="symbols">기호 섞기</option>
+          <option value="lines">코드 한 줄</option>
+        </select>
+      </span>
+      <span class="f">
+        <label for="f-since">기간</label>
+        <select id="f-since">
+          <option value="0">전체</option>
+          <option value="1">오늘</option>
+          <option value="7">최근 7일</option>
+          <option value="30">최근 30일</option>
+        </select>
+      </span>
+      <span class="f grow">
+        <label for="f-q">검색</label>
+        <input id="f-q" type="search" placeholder="이름 또는 학번">
+      </span>
+      <button class="btn" id="csv" type="button">CSV 내보내기</button>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <section class="block">
+      <h2 class="sec">학생별 요약 <span class="cnt" id="sum-cnt"></span></h2>
+      <div class="tbl-wrap">
+        <table class="tbl" id="t-summary">
+          <thead>
+            <tr>
+              <th data-k="class_code">반</th>
+              <th data-k="student_name">이름</th>
+              <th data-k="student_no">학번</th>
+              <th data-k="runs" class="num">판</th>
+              <th data-k="best_kpm" class="num">최고 타수</th>
+              <th data-k="avg_accuracy" class="num">평균 정확도</th>
+              <th data-k="best_combo" class="num">최고 콤보</th>
+              <th data-k="best_grade">최고 등급</th>
+              <th data-k="levels">단계</th>
+              <th data-k="last_at">마지막</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2 class="sec">최근 기록 <span class="cnt" id="run-cnt"></span></h2>
+      <div class="tbl-wrap">
+        <table class="tbl" id="t-runs">
+          <thead>
+            <tr>
+              <th>시각</th><th>반</th><th>이름</th><th>학번</th><th>단계</th>
+              <th>등급</th><th class="num">타수</th><th class="num">정확도</th>
+              <th class="num">콤보</th><th class="num">오타</th><th class="num">시간</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="more" id="more"></p>
+    </section>
+
+    <p class="empty" id="empty" hidden>아직 기록이 없습니다. 학생이 <b>반과 이름을 입력하고</b> 한 판을 끝내면 여기에 나타납니다.</p>
+
+    <footer class="foot">
+      <p class="meta">학생이 입력한 반·학번·이름과 연습 결과만 저장됩니다. 그 외의 개인정보는 수집하지 않습니다.</p>
+    </footer>
+  </section>
+
+</div>
+
+<script src="assets/js/config.js"></script>
+<script src="assets/js/teacher.js"></script>
+</body>
+</html>
