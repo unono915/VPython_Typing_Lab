@@ -80,6 +80,28 @@ git clone https://github.com/unono915/VPython_Typing_Lab.git
 `index.html` 을 브라우저로 열면 끝. 인터넷 없이도 동작한다.
 실습실 인터넷이 불안하면 이 폴더를 USB로 옮겨 써도 된다.
 
+**HTML 한 장으로 만들기** (USB 배포용)
+
+```bash
+npm run build      # → dist/VPython_Typing_Lab_offline.html (약 41KB)
+```
+
+CSS·JS가 전부 인라인된 파일 하나가 나온다. 이것만 있으면 된다.
+
+> ⚠️ `file://` 로 열면 브라우저가 `localStorage` 를 막는 경우가 있다.
+> 그러면 **기록과 업적이 저장되지 않는다.** (연습 자체는 정상 동작하고, 결과 화면도 그대로 나온다.)
+> 기록을 남기려면 배포된 주소로 접속하거나, 로컬 웹서버로 띄운다 — 예: `npx serve`
+
+## 테스트
+
+```bash
+npm test           # 34개 — 렌더 · 채점 · 콤보 · 등급 · 저장 · 레벨 전환
+npm run test:bundle  # 11개 — 단일 파일이 자립 동작하는지
+npm run check      # 둘 다
+```
+
+jsdom 기반 헤드리스 테스트다. **사이트 자체에는 의존성이 없고**, jsdom 은 테스트 전용이다.
+
 ## 구조
 
 ```

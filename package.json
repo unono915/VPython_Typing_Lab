@@ -1,0 +1,21 @@
+{
+  "name": "vpython-typing-lab",
+  "version": "1.0.0",
+  "description": "VPython 코드에 나오는 단어와 기호로 영타를 연습하는 페이지",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unono915/VPython_Typing_Lab.git"
+  },
+  "scripts": {
+    "build": "node tools/build-single-file.js",
+    "test": "node tools/test.js",
+    "test:bundle": "npm run build && node tools/test-bundle.js",
+    "check": "npm test && npm run test:bundle"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  },
+  "comment": "사이트 자체는 의존성이 없습니다. jsdom 은 테스트 전용입니다."
+}

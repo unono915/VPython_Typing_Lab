@@ -169,7 +169,7 @@ LEVEL 3 · 코드 한 줄  ball = sphere(pos=vec(0,0,0), radius=1)  ...     (~12
 | 첫 화면 표시 | 1초 이내 (총 자산 < 100KB, 이미지·폰트 없음) |
 | 입력 지연 | 키 입력 → 화면 반영 16ms 이내 (매 입력마다 DOM 재구성이지만 문자열이 짧아 문제 없음) |
 | 브라우저 | Chrome / Edge 최신. 학교 실습실 기준 |
-| 오프라인 | HTML 파일을 더블클릭해도 100% 동작 |
+| 오프라인 | HTML 파일을 더블클릭해도 연습 기능은 100% 동작. 단 `file://` 에서 브라우저가 `localStorage` 를 막으면 **기록·업적 저장만 비활성화**되고 나머지는 그대로 (예외로 죽지 않는 것이 요구사항) |
 | 개인정보 | 이름은 localStorage 에만. 네트워크 전송 없음 |
 
 ## 7. 성공 기준
@@ -191,6 +191,10 @@ VPython_Typing_Lab/
 │       ├── data.js         문제 세트 (교사가 수정하는 파일)
 │       └── app.js          엔진 (채점 · 지표 · 기록)
 ├── docs/PRD.md             이 문서
+├── tools/
+│   ├── build-single-file.js  오프라인 배포본 생성 (선택)
+│   ├── test.js               헤드리스 테스트 34개
+│   └── test-bundle.js        단일 파일 자립성 테스트 11개
 ├── .nojekyll               Pages 의 Jekyll 전처리 비활성화
 ├── README.md
 └── LICENSE                 MIT

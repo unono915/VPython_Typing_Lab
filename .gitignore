@@ -11,3 +11,7 @@ desktop.ini
 # 임시
 *.log
 *.tmp
+
+# 오프라인 배포본 — 필요할 때 tools/build-single-file.js 로 생성
+dist/
+node_modules/
