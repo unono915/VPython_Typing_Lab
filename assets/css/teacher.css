@@ -156,3 +156,12 @@
 .setup pre.sql code{font-family:var(--mono); font-size:12.5px; line-height:1.7; color:var(--ink-2); white-space:pre}
 .setup pre.sql b{color:var(--u1); font-weight:700}
 .setup .note-sm{margin-top:16px; padding-top:12px; border-top:1px solid var(--rule-soft); font-size:12.5px}
+
+/* 조회 상한 경고 */
+.trunc{
+  margin:14px 0 0; padding:12px 16px; border-radius:3px;
+  background:var(--u1-soft); border:1px solid var(--u1-line); color:var(--u1);
+  font-size:14px; line-height:1.55;
+}
+.trunc[hidden]{display:none}
+.trunc b{font-weight:800}

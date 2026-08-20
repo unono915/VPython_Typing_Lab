@@ -43,8 +43,13 @@ window.fetch = (url, opt) => {
     return Promise.resolve({ ok: true, status: 200,
       json: () => Promise.resolve([{ user_id: '1111' }]) });   // 교사 등록됨
   }
-  return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(ROWS) });
+  return Promise.resolve({
+    ok: true, status: 200,
+    headers: { get: h => h.toLowerCase() === 'content-range' ? '0-5/' + totalOnServer : null },
+    json: () => Promise.resolve(ROWS)
+  });
 };
+let totalOnServer = ROWS.length;   // 서버에 있는 전체 행 수 (상한 테스트용)
 
 for (const rel of ['assets/js/config.js', 'assets/js/teacher.js']) {
   window.eval(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
@@ -213,6 +218,60 @@ function submit() {
   ok('표에서 즉시 사라짐', $('t-runs').querySelectorAll('tbody tr').length === 5,
      $('t-runs').querySelectorAll('tbody tr').length + '행');
   window.fetch = prevFetch;
+
+  console.log('\n── 9-5. 조회 상한 (학기 내내 쌓였을 때) ──');
+  ok('상한 이내면 경고 없음', $('trunc').hidden === true);
+  ok('count=exact 요청', restCalls.some(c => c.headers && c.headers.Prefer === 'count=exact'));
+
+  totalOnServer = 5000;                       // 서버에 5000건, 우리는 6건만 받음
+  restCalls = [];
+  $('reload').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  ok('잘렸으면 경고 표시', $('trunc').hidden === false);
+  ok('실제 건수를 알려줌', $('trunc').textContent.includes('5,000'), $('trunc').textContent);
+  ok('불러온 건수도 알려줌', $('trunc').textContent.includes('6'), $('trunc').textContent);
+  ok('해결 방법 안내', $('trunc').textContent.includes('기간을 좁혀'), $('trunc').textContent);
+
+  console.log('\n── 9-6. 기간 필터는 서버에서 적용 ──');
+  restCalls = [];
+  $('f-since').value = '1';                   // 오늘
+  $('f-since').dispatchEvent(new window.Event('change', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  const runsQ = restCalls.find(c => c.url.includes('/runs?'));
+  ok('서버에 재조회', !!runsQ, restCalls.map(c => c.url).join(' | '));
+  ok('created_at 조건 포함', runsQ && runsQ.url.includes('created_at=gte.'), runsQ && runsQ.url);
+
+  restCalls = [];
+  $('f-since').value = '0';                   // 전체
+  $('f-since').dispatchEvent(new window.Event('change', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  const allQ = restCalls.find(c => c.url.includes('/runs?'));
+  ok('전체면 기간 조건 없음', allQ && !allQ.url.includes('created_at=gte.'), allQ && allQ.url);
+  totalOnServer = ROWS.length;
+  $('reload').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+
+  console.log('\n── 9-7. CSV 내보내기 ──');
+  {
+    let csvBlob = null;
+    const origCreate = window.URL.createObjectURL;
+    window.URL.createObjectURL = b => { csvBlob = b; return 'blob:fake'; };
+    window.URL.revokeObjectURL = () => {};
+    $('csv').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    ok('Blob 생성', !!csvBlob);
+    // Blob.text() 는 규격상 BOM 을 벗겨낸다. 파일에 실제로 기록되는 바이트를 봐야 한다.
+    const bytes = csvBlob ? new Uint8Array(await csvBlob.arrayBuffer()) : new Uint8Array();
+    ok('엑셀 한글용 BOM 바이트(EF BB BF)',
+       bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF,
+       [...bytes.slice(0, 3)].map(b => b.toString(16)).join(' '));
+    const text = csvBlob ? await csvBlob.text() : '';
+    const lines = text.split('\r\n');
+    ok('머리글 + 6행', lines.length === 7, lines.length + '줄');
+    ok('머리글이 한글', lines[0].startsWith('시각,반,이름'), lines[0]);
+    ok('쉼표 있는 값은 따옴표 처리', !lines.slice(1).some(l => l.split(',').length !== 12 && !l.includes('"')),
+       lines[1]);
+    window.URL.createObjectURL = origCreate;
+  }
 
   console.log('\n── 9. 로그아웃 ──');
   $('logout').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));

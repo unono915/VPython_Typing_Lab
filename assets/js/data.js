@@ -17,6 +17,8 @@ var TYPING_DATA = {
      name   : 화면에 보이는 이름
      hint   : 부제 (예시 몇 개)
      count  : 한 판에 출제할 문항 수
+              (한 판이 초보 기준 1~2분이 되도록 맞춘 값입니다.
+               너무 적으면 타수가 들쭉날쭉하고, 너무 많으면 지칩니다)
      par    : 등급 기준 타수 [S, A, B, C]
   ------------------------------------------------------------ */
   levels: [
@@ -24,7 +26,7 @@ var TYPING_DATA = {
       id: 'words',
       name: '낱말',
       hint: 'sphere · vector · rate',
-      count: 12,
+      count: 18,
       par: [260, 200, 150, 100],
       items: [
         'sphere', 'box', 'cylinder', 'arrow', 'curve', 'ring', 'cone',
@@ -64,7 +66,7 @@ var TYPING_DATA = {
       id: 'lines',
       name: '코드 한 줄',
       hint: 'ball = sphere(radius=1)',
-      count: 8,
+      count: 6,
       par: [170, 130, 95, 60],
       items: [
         'ball = sphere(radius=1)',
