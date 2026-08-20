@@ -106,3 +106,37 @@
   text-align:center; color:var(--muted); font-size:14.5px;
 }
 .empty b{color:var(--ink-2)}
+
+/* ── 명렬표 대조 ─────────────────────────────────────── */
+.roster{border:1px solid var(--rule); border-radius:3px; background:var(--surface); padding:16px 18px}
+.roster[hidden]{display:none}
+.roster-help{margin:0 0 10px; font-size:13.5px; color:var(--muted); line-height:1.6}
+.roster-help b{color:var(--ink-2)}
+.roster textarea{
+  width:100%; font-family:var(--sans); font-size:14px; line-height:1.6;
+  padding:10px 12px; border-radius:3px; border:1px solid var(--rule);
+  background:var(--bg); color:var(--ink); resize:vertical;
+}
+.roster-act{margin-top:10px; display:flex; gap:9px; align-items:center; flex-wrap:wrap}
+.roster-note{font-family:var(--mono); font-size:11.5px; color:var(--muted)}
+.roster-note b{color:var(--ink-2)}
+.roster-out:empty{display:none}
+.ro-sum{margin-top:16px; font-size:15px; color:var(--ink-2)}
+.ro-sum b{font-family:var(--mono); font-size:18px; color:var(--u2); font-weight:800}
+.ro-warn{color:var(--u1); font-weight:700}
+.ro-group{margin-top:14px}
+.ro-group h4{margin:0 0 8px; font-size:13px; font-weight:700; letter-spacing:-.01em}
+.ro-hint{font-weight:400; font-size:11.5px; color:var(--muted); margin-left:6px}
+.ro-chips{display:flex; flex-wrap:wrap; gap:6px}
+.ro-chip{font-size:13.5px; padding:4px 10px; border-radius:2px; font-weight:600}
+.ro-chip.miss{color:var(--u1); background:var(--u1-soft); border:1px solid var(--u1-line)}
+.ro-chip.extra{color:var(--muted); background:var(--surface-2); border:1px solid var(--rule)}
+.ro-empty{margin:14px 0 0; font-size:13.5px; color:var(--muted)}
+
+/* 기록 삭제 버튼 */
+.del{
+  border:1px solid transparent; background:none; cursor:pointer; color:var(--muted);
+  font-size:16px; line-height:1; width:24px; height:24px; border-radius:3px; padding:0;
+}
+.del:hover{color:var(--u1); background:var(--u1-soft); border-color:var(--u1-line)}
+.del:disabled{opacity:.4; cursor:default}

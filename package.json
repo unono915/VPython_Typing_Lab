@@ -12,8 +12,9 @@
     "build": "node tools/build-single-file.js",
     "test": "node tools/test.js",
     "test:bundle": "npm run build && node tools/test-bundle.js",
-    "check": "npm test && npm run test:teacher && npm run test:bundle",
-    "test:teacher": "node tools/test-teacher.js"
+    "check": "npm test && npm run test:edge && npm run test:teacher && npm run test:bundle",
+    "test:teacher": "node tools/test-teacher.js",
+    "test:edge": "node tools/test-edge.js"
   },
   "devDependencies": {
     "jsdom": "^29.1.1"

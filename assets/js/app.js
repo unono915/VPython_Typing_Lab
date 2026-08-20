@@ -184,6 +184,10 @@
 
   function checkCaps(e) {
     if (!e.getModifierState) return;
+    // 이름·학번 칸에서 Shift 로 대문자를 치는 것까지 경고하면 혼란스럽다.
+    // 연습 패드 밖의 입력칸에서 난 키는 무시한다.
+    var t = e.target;
+    if (t && t !== field && /^(INPUT|SELECT|TEXTAREA)$/.test(t.tagName)) return;
     var on = e.getModifierState('CapsLock');
     if (on !== capsOn) { capsOn = on; paintGuard(); }
   }
@@ -206,7 +210,9 @@
       render();
       return;
     }
-    if (imeSeen) { imeSeen = false; paintGuard(); }   // 영문으로 돌아옴
+    // 한글 모드에서도 괄호·숫자는 그대로 들어온다. 그런 글자로 경고를 풀면
+    // 오탐이 된다. 영문 "글자"가 들어왔을 때만 영문으로 돌아온 것으로 본다.
+    if (imeSeen && /[A-Za-z]/.test(field.value)) { imeSeen = false; paintGuard(); }
 
     if (capsOn) {
       // 새로 들어온 글자만 되돌린다. 지우는 것(백스페이스)은 막지 않는다.
@@ -323,7 +329,10 @@
     $('newrec').className = 'newrec' + (isNew && prevBest ? ' on' : '');
     $('r-title').textContent = 'LEVEL ' + (lv + 1) + ' · ' + L.name + ' 완주';
     $('r-sub').textContent = verdict(grade, acc);
-    $('r-who').textContent = store.name ? store.name + ' · ' + new Date().toLocaleDateString('ko-KR') : '';
+    var who = [store.cls, store.no, store.name].filter(Boolean).join(' · ');
+    $('r-who').textContent = who
+      ? who + '   |   ' + new Date().toLocaleDateString('ko-KR')
+      : '';
 
     $('r-kpm').textContent = kpm;
     $('r-kpm-best').textContent = store.best[L.id] ? '최고 ' + store.best[L.id].kpm : '';
@@ -452,6 +461,31 @@
   var CFG = (typeof TL_CONFIG !== 'undefined') ? TL_CONFIG : {};
   var syncOn = (typeof TLSync !== 'undefined') && TLSync.enabled();
 
+  /* 컴퓨터실 PC 는 시간마다 다른 학생이 쓴다. 저장된 이름을 그대로 믿으면
+     다음 학생의 기록이 앞사람 이름으로 전송된다. 그래서 페이지를 새로 열 때마다
+     "본인이 맞는지" 한 번 확인받고, 확인 전에는 전송하지 않는다.
+     (직접 입력하는 것도 확인으로 친다) */
+  var identityOk = true;
+
+  function setIdentityOk(v) {
+    identityOk = v;
+    $('confirm-bar').hidden = v;
+  }
+
+  (function initConfirm() {
+    if (!syncOn || !store.name) return;
+    $('cb-name').textContent = store.name + (store.cls ? ' (' + store.cls + ')' : '');
+    setIdentityOk(false);
+  })();
+
+  $('cb-yes').addEventListener('click', function () { setIdentityOk(true); });
+  $('cb-no').addEventListener('click', function () {
+    store.name = ''; store.no = ''; save();
+    whoInput.value = ''; noInput.value = '';
+    setIdentityOk(true);
+    whoInput.focus();
+  });
+
   (function initIdentity() {
     var classes = CFG.classes || [];
     if (!syncOn || !classes.length) {
@@ -477,11 +511,17 @@
   })();
 
   whoInput.addEventListener('input', function () {
-    store.name = whoInput.value.trim().slice(0, 12); save();
+    // 이름 앞뒤 공백과 중간 연속 공백을 정리한다.
+    // "김민준" 과 "김 민준" 이 대시보드에서 다른 사람으로 잡히면 안 된다.
+    store.name = whoInput.value.replace(/\s+/g, ' ').trim().slice(0, 12);
+    save(); setIdentityOk(true);
   });
-  clsInput.addEventListener('change', function () { store.cls = clsInput.value; save(); });
+  clsInput.addEventListener('change', function () {
+    store.cls = clsInput.value; save(); setIdentityOk(true);
+  });
   noInput.addEventListener('input', function () {
-    store.no = noInput.value.trim().slice(0, 8); save();
+    store.no = noInput.value.replace(/\s/g, '').slice(0, 8);
+    save(); setIdentityOk(true);
   });
 
   function sendToServer(r, L) {
@@ -489,6 +529,11 @@
     if (!store.name || !store.cls) {
       syncMsg.className = 'sync warn';
       syncMsg.textContent = '▸ 반과 이름을 입력하면 이 기록이 선생님께 전달됩니다. (지금은 전달되지 않았습니다)';
+      return;
+    }
+    if (!identityOk) {
+      syncMsg.className = 'sync warn';
+      syncMsg.textContent = '▸ 위에서 본인 확인을 해 주세요. 확인 전에는 기록이 전달되지 않습니다.';
       return;
     }
     syncMsg.className = 'sync';

@@ -90,6 +90,22 @@
     <div class="cards" id="cards"></div>
 
     <section class="block">
+      <h2 class="sec">참여 확인
+        <button class="lnk" id="roster-toggle" type="button">명렬표 붙여넣기</button>
+      </h2>
+      <div class="roster" id="roster" hidden>
+        <p class="roster-help">반 학생 이름을 한 줄에 하나씩 붙여넣으세요. <b>아직 안 한 학생</b>을 골라냅니다. 명렬표는 이 브라우저에만 저장되며 서버로 가지 않습니다.</p>
+        <textarea id="roster-text" rows="5" placeholder="김민준&#10;이서연&#10;박도윤&#10;최지우" spellcheck="false"></textarea>
+        <div class="roster-act">
+          <button class="btn pri" id="roster-run" type="button">확인</button>
+          <button class="btn" id="roster-clear" type="button">지우기</button>
+          <span class="roster-note">위 <b>반</b> 필터를 먼저 맞춰 두세요</span>
+        </div>
+        <div class="roster-out" id="roster-out"></div>
+      </div>
+    </section>
+
+    <section class="block">
       <h2 class="sec">학생별 요약 <span class="cnt" id="sum-cnt"></span></h2>
       <div class="tbl-wrap">
         <table class="tbl" id="t-summary">
@@ -120,7 +136,7 @@
             <tr>
               <th>시각</th><th>반</th><th>이름</th><th>학번</th><th>단계</th>
               <th>등급</th><th class="num">타수</th><th class="num">정확도</th>
-              <th class="num">콤보</th><th class="num">오타</th><th class="num">시간</th>
+              <th class="num">콤보</th><th class="num">오타</th><th class="num">시간</th><th></th>
             </tr>
           </thead>
           <tbody></tbody>

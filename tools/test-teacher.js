@@ -28,6 +28,7 @@ const $ = id => d.getElementById(id);
 
 let lastAuthBody = null, restCalls = [];
 window.alert = () => {};
+window.confirm = () => true;     // 삭제 확인 대화상자
 window.fetch = (url, opt) => {
   if (url.includes('/auth/v1/token')) {
     lastAuthBody = JSON.parse(opt.body);
@@ -125,6 +126,57 @@ function submit() {
   console.log('\n── 8. 최근 기록 표 ──');
   ok('6판 표시', $('t-runs').querySelectorAll('tbody tr').length === 6);
   ok('등급 배지 렌더', $('t-runs').querySelectorAll('.gr').length === 6);
+
+  console.log('\n── 9-1. 명렬표 대조 (누가 아직 안 했나) ──');
+  $('roster-toggle').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  ok('명렬표 패널 열림', $('roster').hidden === false);
+  $('f-class').value = '1-3';
+  $('f-class').dispatchEvent(new window.Event('change', { bubbles: true }));
+  $('roster-text').value = '김민준\n이서연\n한지호\n오세훈';
+  $('roster-run').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const out = $('roster-out').textContent;
+  ok('완료 인원 집계', out.includes('2') && out.includes('4'), out.slice(0, 60));
+  const miss = [...$('roster-out').querySelectorAll('.ro-chip.miss')].map(e => e.textContent);
+  ok('미완료 2명 정확히 식별', miss.length === 2 && miss.includes('한지호') && miss.includes('오세훈'),
+     miss.join(', '));
+  ok('완료 학생은 미완료에 없음', !miss.includes('김민준') && !miss.includes('이서연'));
+  ok('명렬표는 localStorage 에만', window.localStorage.getItem('vtl.teacher.roster') !== null);
+
+  console.log('\n── 9-2. 명렬표에 없는 이름 (오타 탐지) ──');
+  $('roster-text').value = '김민준';
+  $('roster-run').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const extra = [...$('roster-out').querySelectorAll('.ro-chip.extra')].map(e => e.textContent);
+  ok('명렬표에 없는 이름을 따로 표시', extra.includes('이서연'), extra.join(', '));
+
+  console.log('\n── 9-3. 쉼표·탭 구분도 허용 ──');
+  $('roster-text').value = '김민준, 이서연,\t한지호';
+  $('roster-run').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const miss2 = [...$('roster-out').querySelectorAll('.ro-chip.miss')].map(e => e.textContent);
+  ok('구분자 혼용 처리', miss2.length === 1 && miss2[0] === '한지호', miss2.join(', '));
+  $('f-class').value = '';
+  $('f-class').dispatchEvent(new window.Event('change', { bubbles: true }));
+
+  console.log('\n── 9-4. 기록 삭제 ──');
+  ROWS.forEach((r, i) => { r.id = 'id-' + i; });
+  restCalls = [];
+  $('reload').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  const delBtns = $('t-runs').querySelectorAll('.del');
+  ok('행마다 삭제 버튼', delBtns.length === 6, delBtns.length + '개');
+  let deleteReq = null;
+  const prevFetch = window.fetch;
+  window.fetch = (url, opt) => {
+    if (opt && opt.method === 'DELETE') { deleteReq = { url, opt }; return Promise.resolve({ ok: true, status: 204 }); }
+    return prevFetch(url, opt);
+  };
+  delBtns[0].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  await new Promise(r => setTimeout(r, 30));
+  ok('DELETE 요청 전송', !!deleteReq, deleteReq && deleteReq.url);
+  ok('id 로 정확히 지정', deleteReq && deleteReq.url.includes('id=eq.id-'), deleteReq && deleteReq.url);
+  ok('Bearer 토큰 사용', deleteReq && deleteReq.opt.headers.Authorization === 'Bearer FAKE_TOKEN');
+  ok('표에서 즉시 사라짐', $('t-runs').querySelectorAll('tbody tr').length === 5,
+     $('t-runs').querySelectorAll('tbody tr').length + '행');
+  window.fetch = prevFetch;
 
   console.log('\n── 9. 로그아웃 ──');
   $('logout').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
