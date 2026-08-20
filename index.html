@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VPython Typing Lab · 코드 타자 연습</title>
+<meta name="description" content="VPython 코드에 실제로 나오는 단어와 기호로 영타를 연습합니다. 설치·로그인 없이 브라우저에서 바로.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⌨️</text></svg>">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <p class="tag">생성형 AI와 메이커 실습 · 영타 연습</p>
+    <h1>VPython <span class="a">Typing</span> Lab</h1>
+    <p class="intro">다음 주부터 이 단어들을 하루에 수백 번 칩니다. <b>코드에서 제일 많이 틀리는 건 알파벳이 아니라 <span class="mono">( ) . _ =</span> 같은 기호입니다.</b> 그래서 기호까지 같이 칩니다.</p>
+    <div class="whoami">
+      <label for="who">이름</label>
+      <input id="who" type="text" maxlength="12" placeholder="결과 화면에 표시됩니다" autocomplete="off" spellcheck="false">
+      <span class="whohint">이 브라우저에만 저장됩니다</span>
+    </div>
+  </header>
+
+  <nav class="levels" id="levels" aria-label="연습 단계"></nav>
+
+  <section class="stats" aria-label="실시간 기록">
+    <div class="st"><div class="l">타 / 분</div><div class="v" id="s-kpm">0</div></div>
+    <div class="st"><div class="l">정확도</div><div class="v" id="s-acc">100<i>%</i></div></div>
+    <div class="st"><div class="l">진행</div><div class="v" id="s-prg">0<i> / 0</i></div></div>
+    <div class="st"><div class="l">시간</div><div class="v" id="s-tm">0<i>초</i></div></div>
+  </section>
+
+  <section class="pad" id="pad">
+    <i class="progbar" id="progbar"></i>
+
+    <div class="combo" id="combo" aria-hidden="true">
+      <span class="c-n" id="combo-n">0</span>
+      <span class="c-l">COMBO</span>
+    </div>
+
+    <p class="target" id="target"></p>
+    <input id="field" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" aria-label="여기에 입력하세요">
+
+    <p class="tapmsg" id="tapmsg">▸ 아무 키나 눌러서 시작하세요</p>
+    <p class="next" id="next"></p>
+  </section>
+
+  <div class="bar">
+    <button class="btn pri" id="restart" type="button">다시 시작</button>
+    <button class="btn" id="skip" type="button" title="이 문제 건너뛰기 (Esc)">건너뛰기</button>
+    <span class="note">틀리면 <kbd>Backspace</kbd> 로 고쳐야 넘어갑니다</span>
+  </div>
+
+  <!-- 결과 -->
+  <section class="result" id="result" aria-live="polite">
+    <div class="r-head">
+      <div class="grade" id="grade">
+        <span class="g-l" id="grade-l">A</span>
+        <span class="g-c">GRADE</span>
+      </div>
+      <div class="r-title">
+        <p class="newrec" id="newrec">NEW RECORD</p>
+        <h2 id="r-title">LEVEL 1 · 낱말 완주</h2>
+        <p class="r-sub" id="r-sub"></p>
+        <p class="r-who" id="r-who"></p>
+      </div>
+    </div>
+
+    <div class="rgrid">
+      <div><div class="l">타 / 분</div><div class="v" id="r-kpm">0</div><div class="best" id="r-kpm-best"></div></div>
+      <div><div class="l">정확도</div><div class="v" id="r-acc">0%</div></div>
+      <div><div class="l">최고 콤보</div><div class="v" id="r-combo">0</div></div>
+      <div><div class="l">틀린 횟수</div><div class="v" id="r-err">0</div></div>
+    </div>
+
+    <p class="worst" id="worst"></p>
+
+    <div class="earned" id="earned"></div>
+
+    <div class="r-bar">
+      <button class="btn pri" id="again" type="button">한 판 더</button>
+      <button class="btn" id="retry-wrong" type="button">틀린 것만 다시</button>
+      <button class="btn" id="next-level" type="button">다음 단계 도전</button>
+    </div>
+
+    <p class="shot"><b>이 화면을 캡처해서 내 폴더에 저장하세요.</b> <span class="mono">Win + Shift + S</span> — 학기 말에 다시 재서 얼마나 늘었는지 봅니다.</p>
+  </section>
+
+  <!-- 업적 -->
+  <section class="badges">
+    <h3 class="sec">업적</h3>
+    <div class="badge-grid" id="badges"></div>
+  </section>
+
+  <!-- 내 기록 -->
+  <section class="records" id="records-wrap">
+    <h3 class="sec">내 기록 <button class="lnk" id="clear-rec" type="button">지우기</button></h3>
+    <div class="rec-list" id="records"></div>
+  </section>
+
+  <footer class="foot">
+    <p><b>왜 이 단어들인가?</b> 전부 VPython 코드에 실제로 나오는 것들입니다. 뜻은 다음 주에 배웁니다 — 오늘은 <b>손가락만 익히면 됩니다.</b></p>
+    <p>타수는 1분당 친 글자 수입니다. 정확도가 95% 아래면 속도보다 <b>정확도를 먼저</b> 올리세요. 아무리 빨라도 정확도가 낮으면 등급이 올라가지 않습니다.</p>
+    <p class="meta">기록과 이름은 이 브라우저에만 저장되며 어디로도 전송되지 않습니다. · <a href="https://github.com/unono915/VPython_Typing_Lab">GitHub</a></p>
+  </footer>
+
+</div>
+
+<script src="assets/js/data.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
