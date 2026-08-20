@@ -45,19 +45,43 @@
 | 역할 | INSERT | SELECT | UPDATE | DELETE |
 |---|---|---|---|---|
 | 학생 (익명) | ✅ | ❌ | ❌ | ❌ |
-| 교사 (로그인) | — | ✅ | ❌ | ✅ |
+| 로그인했지만 **미등록** 계정 | ❌ | ❌ | ❌ | ❌ |
+| 교사 (`public.teachers` 등록) | ❌ | ✅ | ❌ | ✅ |
 
 학생은 **자기 기록조차 다시 읽을 수 없다.** 남의 기록을 보거나 점수를 고치는 것도 불가능하다.
+
+> ⚠️ **로그인 자체는 자격이 아니다.** Supabase 프로젝트는 기본적으로 공개 가입이 열려 있고
+> 공개 키는 페이지 소스에 노출된다. 그래서 "로그인한 사용자면 누구나 읽기" 로 두면
+> **외부인이 스스로 가입해 학생 기록을 전부 볼 수 있다.**
+> `public.teachers` 에 등록된 계정만 읽도록 막아 두었다.
 값 범위(타수 0~2000, 정확도 0~100 등)는 DB 의 CHECK 제약으로 막혀 있어 클라이언트를 신뢰하지 않는다.
 
 수집 항목은 **반·학번·이름과 연습 결과**뿐이다. 그 외의 개인정보는 저장하지 않는다.
 
 ### 교사 계정 만들기 (최초 1회)
 
+**1단계 — 계정 만들기**
+
 1. Supabase 대시보드 → 프로젝트 → **Authentication → Users**
 2. **Add user → Create new user**
 3. 이메일과 비밀번호를 **직접** 정해 입력하고 **Auto Confirm User** 를 켠 뒤 저장
-4. `teacher.html` 에서 그 계정으로 로그인
+
+**2단계 — 조회 권한 주기 (필수)**
+
+계정만 만들면 아무것도 보이지 않는다. SQL Editor 에서 이메일만 바꿔 실행한다.
+
+```sql
+insert into public.teachers (user_id, email)
+select id, email from auth.users
+where email = '교사@이메일'
+on conflict (user_id) do nothing;
+```
+
+**권장 — 외부인 가입 막기**
+
+대시보드 → **Authentication → Sign In / Providers → Email** 에서
+**Allow new users to sign up** 을 끈다. 2단계를 했다면 가입해도 아무것도 못 보지만,
+아예 막아 두는 편이 낫다. 같은 화면에서 **Leaked password protection** 도 켜 두면 좋다.
 
 비밀번호는 선생님만 아셔야 하므로 반드시 직접 정하세요.
 
@@ -129,9 +153,9 @@ CSS·JS가 전부 인라인된 파일 하나가 나온다. 이것만 있으면 �
 ```bash
 npm test              # 68개 — 렌더 · 채점 · 콤보 · 등급 · 저장 · 한영/CapsLock · 전송
 npm run test:edge     # 39개 — 공용 PC · 손상된 저장소 · 전부 건너뛰기 등 엣지 케이스
-npm run test:teacher  # 44개 — 로그인 · 집계 · 필터 · 정렬 · 명렬표 · 삭제
+npm run test:teacher  # 49개 — 로그인 · 집계 · 필터 · 정렬 · 명렬표 · 삭제
 npm run test:bundle   # 11개 — 단일 파일이 자립 동작하는지
-npm run check         # 전부 (162개)
+npm run check         # 전부 (167개)
 ```
 
 jsdom 기반 헤드리스 테스트다. **사이트 자체에는 의존성이 없고**, jsdom 은 테스트 전용이다.

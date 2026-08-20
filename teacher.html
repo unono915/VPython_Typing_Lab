@@ -31,14 +31,34 @@
     </form>
 
     <details class="setup">
-      <summary>처음이신가요? 계정 만드는 법</summary>
+      <summary>처음이신가요? 계정 만들기 (2단계)</summary>
+
+      <h4>1단계 · 계정 만들기</h4>
       <ol>
         <li>Supabase 대시보드 → 이 프로젝트 → <b>Authentication → Users</b></li>
-        <li><b>Add user</b> → <b>Create new user</b></li>
+        <li><b>Add user → Create new user</b></li>
         <li>이메일과 비밀번호를 <b>직접</b> 정해서 입력하고, <b>Auto Confirm User</b> 를 켠 뒤 저장</li>
-        <li>그 계정으로 이 페이지에서 로그인</li>
       </ol>
-      <p>비밀번호는 선생님만 아셔야 하므로 직접 정하세요. 계정은 하나면 충분합니다.</p>
+
+      <h4>2단계 · 조회 권한 주기 <span class="must">필수</span></h4>
+      <p>계정을 만든 것만으로는 아무것도 보이지 않습니다. <b>교사 목록에 등록</b>해야 합니다.
+         (이 단계가 없으면 누구나 가입해서 학생 기록을 볼 수 있게 됩니다.)</p>
+      <ol>
+        <li>대시보드 → <b>SQL Editor</b> → <b>New query</b></li>
+        <li>아래를 붙여넣고 <b>이메일만 바꿔서</b> 실행(Run)</li>
+      </ol>
+      <pre class="sql"><code>insert into public.teachers (user_id, email)
+select id, email from auth.users
+where email = '<b>여기에@이메일.넣기</b>'
+on conflict (user_id) do nothing;</code></pre>
+      <p><b>Success. No rows returned</b> 이 나오면 정상입니다. 이제 이 페이지에서 로그인하세요.</p>
+
+      <h4>권장 · 외부인 가입 막기</h4>
+      <p>대시보드 → <b>Authentication → Sign In / Providers → Email</b> 에서
+         <b>Allow new users to sign up</b> 을 꺼 두세요.
+         2단계를 했다면 가입해도 아무것도 못 보지만, 아예 막아 두는 편이 낫습니다.</p>
+
+      <p class="note-sm">비밀번호는 선생님만 아셔야 하므로 반드시 직접 정하세요. 계정은 하나면 충분합니다.</p>
     </details>
   </section>
 

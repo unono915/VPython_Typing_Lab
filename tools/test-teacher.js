@@ -39,6 +39,10 @@ window.fetch = (url, opt) => {
     return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ access_token: 'FAKE_TOKEN' }) });
   }
   restCalls.push({ url, headers: opt && opt.headers });
+  if (url.includes('/teachers?')) {
+    return Promise.resolve({ ok: true, status: 200,
+      json: () => Promise.resolve([{ user_id: '1111' }]) });   // 교사 등록됨
+  }
   return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(ROWS) });
 };
 
@@ -74,7 +78,39 @@ function submit() {
      && window.localStorage.getItem('vtl.teacher.token') === null);
   ok('REST 호출에 Bearer 토큰 사용',
      restCalls.length > 0 && restCalls[0].headers.Authorization === 'Bearer FAKE_TOKEN');
-  ok('runs 를 최신순으로 조회', restCalls[0].url.includes('order=created_at.desc'), restCalls[0].url);
+  ok('먼저 교사 권한을 확인', restCalls[0].url.includes('/teachers?'), restCalls[0].url);
+  const runsCall = restCalls.find(c => c.url.includes('/runs?'));
+  ok('runs 를 최신순으로 조회', runsCall && runsCall.url.includes('order=created_at.desc'),
+     runsCall && runsCall.url);
+
+  console.log('\n── 3-1. 로그인은 되지만 교사 목록에 없는 계정 ──');
+  {
+    const keep = window.fetch;
+    window.fetch = (url, opt) => {
+      if (url.includes('/auth/v1/token')) {
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({ access_token: 'OUTSIDER' }) });
+      }
+      if (url.includes('/teachers?')) {
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([]) });  // 등록 안 됨
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(ROWS) });
+    };
+    $('logout').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+    $('email').value = 'stranger@evil.test';
+    $('pw').value = 'whatever';
+    await submit();
+    ok('대시보드가 열리지 않음', $('dash').hidden === true);
+    ok('권한 없음 안내 표시', $('login-err').textContent.includes('조회 권한이 없습니다'),
+       $('login-err').textContent);
+    ok('토큰도 폐기됨', window.sessionStorage.getItem('vtl.teacher.token') === null);
+    window.fetch = keep;
+
+    // 정상 계정으로 복귀
+    $('email').value = 'teacher@school.kr';
+    $('pw').value = 'correct-horse';
+    await submit();
+    ok('정상 계정은 다시 열림', $('dash').hidden === false);
+  }
 
   console.log('\n── 4. 요약 카드 ──');
   const cards = [...d.querySelectorAll('.card .v')].map(e => e.textContent);
