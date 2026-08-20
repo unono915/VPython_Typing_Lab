@@ -93,6 +93,20 @@ docs/PRD.md                기획 문서
 의존성 0. 프레임워크·CDN·외부 폰트를 쓰지 않는다.
 학교 방화벽이 CDN을 막는 경우가 있어서 의도적으로 그렇게 했다.
 
+## 배포
+
+**GitHub Pages · Deploy from a branch.** 빌드 단계가 없으므로 Actions 워크플로를 두지 않는다.
+
+저장소 **Settings → Pages** 에서 최초 1회만 설정한다.
+
+| 항목 | 값 |
+|---|---|
+| Source | Deploy from a branch |
+| Branch | `main` |
+| Folder | `/ (root)` |
+
+이후 `main` 에 푸시하면 1~2분 안에 반영된다.
+
 ## 라이선스
 
 MIT — 자유롭게 가져다 쓰고 고치면 된다. 다른 과목·다른 언어 세트로 바꿔도 좋다.

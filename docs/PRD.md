@@ -191,7 +191,7 @@ VPython_Typing_Lab/
 │       ├── data.js         문제 세트 (교사가 수정하는 파일)
 │       └── app.js          엔진 (채점 · 지표 · 기록)
 ├── docs/PRD.md             이 문서
-├── .github/workflows/pages.yml   GitHub Pages 자동 배포
+├── .nojekyll               Pages 의 Jekyll 전처리 비활성화
 ├── README.md
 └── LICENSE                 MIT
 ```
@@ -200,9 +200,28 @@ VPython_Typing_Lab/
 
 ## 9. 배포
 
-- `main` 브랜치 push → GitHub Actions → GitHub Pages
-- 최초 1회만 저장소 설정에서 **Pages source = GitHub Actions** 로 지정 필요
-- 배포 주소: `https://unono915.github.io/VPython_Typing_Lab/`
+**GitHub Pages · Deploy from a branch (`main` / root)**
+
+빌드 단계가 없는 정적 파일 묶음이므로 Actions 워크플로를 두지 않는다.
+
+> **설계 판단:** 처음에는 Actions 워크플로로 배포하려 했으나,
+> 저장소의 Actions 권한이 읽기 전용이라 `configure-pages` 가 Pages를 켜지 못하고 실패했다.
+> 빌드할 것이 없는 프로젝트에 워크플로를 두면 **얻는 것 없이 실패 지점만 하나 늘어난다.**
+> (푸시할 때마다 실패 알림 메일이 온다.) 그래서 워크플로를 걷어내고 브랜치 배포로 전환했다.
+
+최초 1회 설정 — 저장소 **Settings → Pages**
+
+| 항목 | 값 |
+|---|---|
+| Source | Deploy from a branch |
+| Branch | `main` |
+| Folder | `/ (root)` |
+
+이후 `main` 에 푸시하면 1~2분 안에 자동 반영된다.
+
+배포 주소: `https://unono915.github.io/VPython_Typing_Lab/`
+
+`.nojekyll` 을 두어 Jekyll 전처리를 건너뛴다.
 
 ## 10. 열린 질문
 
