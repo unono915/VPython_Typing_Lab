@@ -31,7 +31,16 @@
     </form>
 
     <details class="setup">
-      <summary>처음이신가요? 계정 만들기 (2단계)</summary>
+      <summary>처음이신가요? 계정 만들기 (3단계)</summary>
+
+      <h4>0단계 · 먼저 외부인 가입을 막습니다 <span class="must">먼저</span></h4>
+      <p>이 프로젝트는 기본값이 <b>누구나 가입 가능</b>입니다. 계정을 만들기 <b>전에</b> 잠가야
+         엉뚱한 사람이 먼저 가입하는 일이 없습니다.</p>
+      <ol>
+        <li>Supabase 대시보드 → <b>Authentication → Sign In / Providers → Email</b></li>
+        <li><b>Allow new users to sign up</b> 끄기</li>
+        <li>같은 화면의 <b>Leaked password protection</b> 은 켜 두면 좋습니다</li>
+      </ol>
 
       <h4>1단계 · 계정 만들기</h4>
       <ol>
@@ -49,14 +58,12 @@
       </ol>
       <pre class="sql"><code>insert into public.teachers (user_id, email)
 select id, email from auth.users
-where email = '<b>여기에@이메일.넣기</b>'
 on conflict (user_id) do nothing;</code></pre>
-      <p><b>Success. No rows returned</b> 이 나오면 정상입니다. 이제 이 페이지에서 로그인하세요.</p>
-
-      <h4>권장 · 외부인 가입 막기</h4>
-      <p>대시보드 → <b>Authentication → Sign In / Providers → Email</b> 에서
-         <b>Allow new users to sign up</b> 을 꺼 두세요.
-         2단계를 했다면 가입해도 아무것도 못 보지만, 아예 막아 두는 편이 낫습니다.</p>
+      <p>0단계로 가입을 막아 두었다면 계정은 선생님 것 하나뿐이므로,
+         위 SQL 을 <b>고칠 것 없이 그대로</b> 붙여넣고 Run 하면 됩니다.
+         <b>Success</b> 가 나오면 정상입니다. 이제 이 페이지에서 로그인하세요.</p>
+      <p class="note-sm">계정이 여러 개라면 특정 계정만 등록하세요 —
+         <span class="mono">... from auth.users where email = '내@이메일'</span></p>
 
       <p class="note-sm">비밀번호는 선생님만 아셔야 하므로 반드시 직접 정하세요. 계정은 하나면 충분합니다.</p>
     </details>
