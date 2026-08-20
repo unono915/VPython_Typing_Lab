@@ -54,7 +54,7 @@
          (이 단계가 없으면 누구나 가입해서 학생 기록을 볼 수 있게 됩니다.)</p>
       <ol>
         <li>대시보드 → <b>SQL Editor</b> → <b>New query</b></li>
-        <li>아래를 붙여넣고 <b>이메일만 바꿔서</b> 실행(Run)</li>
+        <li>아래를 <b>그대로</b> 붙여넣고 실행(Run)</li>
       </ol>
       <pre class="sql"><code>insert into public.teachers (user_id, email)
 select id, email from auth.users
