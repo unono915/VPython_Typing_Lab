@@ -51,7 +51,9 @@ window.fetch = (url, opt) => {
 };
 let totalOnServer = ROWS.length;   // 서버에 있는 전체 행 수 (상한 테스트용)
 
-for (const rel of ['assets/js/config.js', 'assets/js/teacher.js']) {
+// teacher.html 에 적힌 <script src> 순서 그대로 주입한다
+const SCRIPTS = [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m => m[1]);
+for (const rel of SCRIPTS) {
   window.eval(fs.readFileSync(path.join(ROOT, rel), 'utf8'));
 }
 
@@ -138,6 +140,59 @@ function submit() {
      minjun.querySelectorAll('td')[5].textContent);
   ok('김민준 단계 표시 2개 활성', minjun.querySelectorAll('.lvdot.on').length === 2);
   ok('낮은 정확도에 bad 표시', [...rows].some(r => r.querySelector('td.bad')));
+
+  console.log('\n── 5-1. 업적 (기록에서 재계산) ──');
+  ok('data.js 도 로드', SCRIPTS.some(s => s.endsWith('data.js')), SCRIPTS.join(', '));
+  ok('업적 현황 8종 렌더', d.querySelectorAll('.badge-stat .bs').length === 8,
+     d.querySelectorAll('.badge-stat .bs').length + '개');
+
+  // 최지우: kpm 271 · acc 99 · errors 1 · combo 131 · words 만
+  //   → 첫 타 / 속사(200+) / 정밀(98+) / 콤보50 / 콤보100  = 5개. 무결점·기호·삼단은 아님
+  const jiwoo = rows.find(r => r.querySelectorAll('td')[1].textContent === '최지우');
+  const jiwooOn = [...jiwoo.querySelectorAll('.bi.on')].length;
+  ok('최지우 업적 5개', jiwooOn === 5, jiwooOn + '개');
+  ok('최지우 개수 표시', jiwoo.querySelector('.bdg b').textContent === '5',
+     jiwoo.querySelector('.bdg b').textContent);
+
+  // 박도윤: kpm 74 · acc 82 · errors 18 · combo 11 → 첫 타 만
+  const doyun = rows.find(r => r.querySelectorAll('td')[1].textContent === '박도윤');
+  ok('박도윤 업적 1개(첫 타)', [...doyun.querySelectorAll('.bi.on')].length === 1,
+     [...doyun.querySelectorAll('.bi.on')].length + '개');
+
+  // 이서연: words(214/98/err1/combo88) + lines(141/97/err2/combo63)
+  //   → 첫 타 · 속사 · 정밀 · 콤보50 · 기호사냥꾼(lines & err<=3) = 5개
+  const seoyeon = rows.find(r => r.querySelectorAll('td')[1].textContent === '이서연');
+  ok('이서연 기호 사냥꾼 획득',
+     [...seoyeon.querySelectorAll('.bi.on')].some(e => e.title.includes('기호 사냥꾼')),
+     [...seoyeon.querySelectorAll('.bi.on')].map(e => e.title).join(' / '));
+
+  // 아무도 세 단계를 다 하지 않았다 → 삼단 완주 0명
+  const allthree = [...d.querySelectorAll('.badge-stat .bs')]
+    .find(e => e.textContent.includes('삼단 완주'));
+  ok('삼단 완주 0명', allthree.querySelector('.bs-n').textContent.startsWith('0'),
+     allthree.querySelector('.bs-n').textContent);
+  ok('미달성 업적은 흐리게', allthree.classList.contains('zero'));
+
+  // 무결점(오타 0) 은 표본에 없다
+  const perfect = [...d.querySelectorAll('.badge-stat .bs')]
+    .find(e => e.textContent.includes('무결점'));
+  ok('무결점 0명 (표본에 오타 0 없음)', perfect.querySelector('.bs-n').textContent.startsWith('0'),
+     perfect.querySelector('.bs-n').textContent);
+
+  // 첫 타는 전원
+  const first = [...d.querySelectorAll('.badge-stat .bs')].find(e => e.textContent.includes('첫 타'));
+  ok('첫 타 전원 4명', first.querySelector('.bs-n').textContent.startsWith('4'),
+     first.querySelector('.bs-n').textContent);
+
+  console.log('\n── 5-2. 업적 개수로 정렬 ──');
+  const bth = [...$('t-summary').querySelectorAll('th')].find(e => e.dataset.k === 'badgeCount');
+  bth.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  const counts = [...$('t-summary').querySelectorAll('tbody tr')]
+    .map(r => parseInt(r.querySelector('.bdg b').textContent, 10));
+  ok('내림차순 정렬', counts.every((v, i) => i === 0 || counts[i - 1] >= v), counts.join(','));
+  // 원래 정렬로 복귀
+  [...$('t-summary').querySelectorAll('th')].find(e => e.dataset.k === 'best_kpm')
+    .dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
 
   console.log('\n── 6. 필터 ──');
   $('f-class').value = '1-4';

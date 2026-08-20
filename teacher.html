@@ -135,6 +135,12 @@ on conflict (user_id) do nothing;</code></pre>
     </section>
 
     <section class="block">
+      <h2 class="sec">업적 현황 <span class="cnt" id="badge-cnt"></span></h2>
+      <div class="badge-stat" id="badge-stat"></div>
+      <p class="badge-note">업적은 저장된 기록에서 다시 계산합니다. 학생이 보낸 값을 그대로 믿지 않습니다.</p>
+    </section>
+
+    <section class="block">
       <h2 class="sec">학생별 요약 <span class="cnt" id="sum-cnt"></span></h2>
       <div class="tbl-wrap">
         <table class="tbl" id="t-summary">
@@ -149,6 +155,7 @@ on conflict (user_id) do nothing;</code></pre>
               <th data-k="best_combo" class="num">최고 콤보</th>
               <th data-k="best_grade">최고 등급</th>
               <th data-k="levels">단계</th>
+              <th data-k="badgeCount">업적</th>
               <th data-k="last_at">마지막</th>
             </tr>
           </thead>
@@ -184,6 +191,7 @@ on conflict (user_id) do nothing;</code></pre>
 </div>
 
 <script src="assets/js/config.js"></script>
+<script src="assets/js/data.js"></script>
 <script src="assets/js/teacher.js"></script>
 </body>
 </html>

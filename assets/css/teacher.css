@@ -58,7 +58,7 @@
 .block .sec{display:flex; align-items:baseline; gap:10px}
 .cnt{font-family:var(--mono); font-size:11px; color:var(--ink-2); letter-spacing:0; text-transform:none}
 .tbl-wrap{border:1px solid var(--rule); border-radius:3px; overflow-x:auto}
-.tbl{width:100%; border-collapse:collapse; font-size:13.5px; min-width:760px}
+.tbl{width:100%; border-collapse:collapse; font-size:13.5px; min-width:900px}
 .tbl th{
   position:sticky; top:0; z-index:1; text-align:left; white-space:nowrap;
   font-family:var(--mono); font-size:10.5px; letter-spacing:.09em; text-transform:uppercase;
@@ -165,3 +165,31 @@
 }
 .trunc[hidden]{display:none}
 .trunc b{font-weight:800}
+
+/* ── 업적 현황 ───────────────────────────────────────── */
+.badge-stat{display:grid; gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden}
+@media(min-width:800px){.badge-stat{grid-template-columns:1fr 1fr}}
+.bs{
+  background:var(--surface); padding:11px 15px;
+  display:grid; grid-template-columns:auto 1fr 90px auto; gap:12px; align-items:center;
+}
+.bs.zero{opacity:.5}
+.bs-i{font-size:19px; line-height:1; filter:grayscale(1); opacity:.4}
+.bs:not(.zero) .bs-i{filter:none; opacity:1}
+.bs-t{min-width:0}
+.bs-t b{display:block; font-size:13.5px; font-weight:700; letter-spacing:-.01em}
+.bs-d{display:block; font-size:11.5px; color:var(--muted); line-height:1.4; margin-top:1px}
+.bs-bar{height:7px; border-radius:99px; background:var(--surface-2); overflow:hidden}
+.bs-bar i{display:block; height:100%; background:var(--gold); border-radius:99px; transition:width .3s ease}
+.bs-n{font-family:var(--mono); font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; text-align:right}
+.bs-n .sl{font-size:11px; color:var(--muted); font-weight:400}
+.badge-note{margin:10px 0 0; font-size:12.5px; color:var(--muted)}
+
+/* 요약 표의 업적 칸 */
+.tbl .bdg{white-space:nowrap; line-height:1}
+.tbl .bi{font-size:13px; filter:grayscale(1); opacity:.25; margin-right:1px}
+.tbl .bi.on{filter:none; opacity:1}
+.tbl .bdg b{
+  font-family:var(--mono); font-size:11.5px; color:var(--muted);
+  margin-left:6px; font-weight:700; vertical-align:1px;
+}
