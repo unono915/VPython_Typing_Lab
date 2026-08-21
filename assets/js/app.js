@@ -461,30 +461,60 @@
   var CFG = (typeof TL_CONFIG !== 'undefined') ? TL_CONFIG : {};
   var syncOn = (typeof TLSync !== 'undefined') && TLSync.enabled();
 
-  /* 컴퓨터실 PC 는 시간마다 다른 학생이 쓴다. 저장된 이름을 그대로 믿으면
-     다음 학생의 기록이 앞사람 이름으로 전송된다. 그래서 페이지를 새로 열 때마다
-     "본인이 맞는지" 한 번 확인받고, 확인 전에는 전송하지 않는다.
-     (직접 입력하는 것도 확인으로 친다) */
+  /* ── 시작 모달 ─────────────────────────────────────
+     컴퓨터실 PC 는 교시마다 다른 학생이 쓴다. 상단 입력칸만 두면
+     그냥 지나쳐서 기록이 안 남거나, 앞사람 이름으로 남는다.
+     그래서 시작할 때 모달로 한 번 받고, 받기 전에는 전송하지 않는다. */
   var identityOk = true;
+  var modal = $('modal');
 
-  function setIdentityOk(v) {
-    identityOk = v;
-    $('confirm-bar').hidden = v;
+  function modalOpen() { return modal && !modal.hidden; }
+
+  function closeModal(okToSend) {
+    identityOk = !!okToSend;
+    modal.hidden = true;
+    field.focus();
   }
 
-  (function initConfirm() {
-    if (!syncOn || !store.name) return;
-    $('cb-name').textContent = store.name + (store.cls ? ' (' + store.cls + ')' : '');
-    setIdentityOk(false);
-  })();
+  function openModal() {
+    identityOk = false;          // 확인이 끝나기 전에는 절대 전송하지 않는다
+    modal.hidden = false;
+    if (store.name) {
+      // 저장된 정보가 있다 → 본인 확인만
+      $('m-new').hidden = true;
+      $('m-back').hidden = false;
+      $('m-who').innerHTML = [store.cls, store.no].filter(Boolean).join(' · ') +
+        (store.cls || store.no ? '<br>' : '') + '<b>' + esc(store.name) + '</b>';
+      $('m-yes').focus();
+    } else {
+      $('m-new').hidden = false;
+      $('m-back').hidden = true;
+      var first = $('m-class-wrap').style.display === 'none' ? $('m-name') : $('m-class');
+      first.focus();
+    }
+  }
 
-  $('cb-yes').addEventListener('click', function () { setIdentityOk(true); });
-  $('cb-no').addEventListener('click', function () {
-    store.name = ''; store.no = ''; save();
-    whoInput.value = ''; noInput.value = '';
-    setIdentityOk(true);
-    whoInput.focus();
-  });
+  function submitModal() {
+    var cls = $('m-class').value;
+    var nm = $('m-name').value.replace(/\s+/g, ' ').trim().slice(0, 12);
+    var no = $('m-no').value.replace(/\s/g, '').slice(0, 8);
+    var needClass = $('m-class-wrap').style.display !== 'none';
+
+    if (needClass && !cls) { $('m-err').textContent = '반을 골라 주세요.'; $('m-class').focus(); return; }
+    if (!nm) { $('m-err').textContent = '이름을 입력해 주세요.'; $('m-name').focus(); return; }
+
+    $('m-err').textContent = '';
+    store.cls = cls; store.name = nm; store.no = no;
+    save();
+    syncHeaderFields();
+    closeModal(true);
+  }
+
+  function syncHeaderFields() {
+    whoInput.value = store.name;
+    clsInput.value = store.cls || '';
+    noInput.value = store.no || '';
+  }
 
   (function initIdentity() {
     var classes = CFG.classes || [];
@@ -501,6 +531,21 @@
     if (!syncOn || CFG.askStudentNo === false) $('wno-wrap').style.display = 'none';
     else noInput.value = store.no || '';
 
+    // 모달의 반 목록도 같이 채운다
+    if (syncOn && classes.length) {
+      classes.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        $('m-class').appendChild(o);
+      });
+      $('m-class').value = store.cls || '';
+    } else {
+      $('m-class-wrap').style.display = 'none';
+    }
+    if (!syncOn || CFG.askStudentNo === false) $('m-no-wrap').style.display = 'none';
+    else $('m-no').value = store.no || '';
+    $('m-name').value = store.name || '';
+
     whoInput.value = store.name;
     $('whohint').textContent = syncOn
       ? '한 번만 입력하면 계속 기억합니다'
@@ -514,14 +559,30 @@
     // 이름 앞뒤 공백과 중간 연속 공백을 정리한다.
     // "김민준" 과 "김 민준" 이 대시보드에서 다른 사람으로 잡히면 안 된다.
     store.name = whoInput.value.replace(/\s+/g, ' ').trim().slice(0, 12);
-    save(); setIdentityOk(true);
+    save(); identityOk = true;
   });
   clsInput.addEventListener('change', function () {
-    store.cls = clsInput.value; save(); setIdentityOk(true);
+    store.cls = clsInput.value; save(); identityOk = true;
   });
   noInput.addEventListener('input', function () {
     store.no = noInput.value.replace(/\s/g, '').slice(0, 8);
-    save(); setIdentityOk(true);
+    save(); identityOk = true;
+  });
+
+  /* 모달 조작 */
+  $('m-start').addEventListener('click', submitModal);
+  $('m-skip').addEventListener('click', function () { closeModal(false); });
+  $('m-yes').addEventListener('click', function () { closeModal(true); });
+  $('m-no-me').addEventListener('click', function () {
+    store.name = ''; store.no = ''; save();
+    syncHeaderFields();
+    $('m-name').value = ''; $('m-no').value = '';
+    openModal();                       // 입력 모드로 다시 연다
+  });
+  ['m-class', 'm-no', 'm-name'].forEach(function (id) {
+    $(id).addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); submitModal(); }
+    });
   });
 
   function sendToServer(r, L) {
@@ -533,7 +594,7 @@
     }
     if (!identityOk) {
       syncMsg.className = 'sync warn';
-      syncMsg.textContent = '▸ 위에서 본인 확인을 해 주세요. 확인 전에는 기록이 전달되지 않습니다.';
+      syncMsg.textContent = '▸ 본인 확인을 하지 않아 이 기록은 전달되지 않았습니다. 위에서 이름을 입력하세요.';
       return;
     }
     syncMsg.className = 'sync';
@@ -569,11 +630,12 @@
 
   if (syncOn) TLSync.flush();
 
-  pad.addEventListener('click', function () { field.focus(); });
+  pad.addEventListener('click', function () { if (!modalOpen()) field.focus(); });
   field.addEventListener('focus', function () { pad.classList.add('focus'); });
   field.addEventListener('blur', function () { pad.classList.remove('focus'); });
 
   document.addEventListener('keydown', function (e) {
+    if (modalOpen()) return;                 // 모달이 우선이다
     if (e.key === 'Escape') { e.preventDefault(); skipItem(); return; }
     if (e.target === field) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
@@ -585,4 +647,5 @@
   paintBadges();
   paintRecords();
   start(0);
+  if (syncOn) openModal();
 })();

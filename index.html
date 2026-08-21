@@ -10,6 +10,49 @@
 </head>
 <body>
 
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="m-title">
+  <div class="modal-box">
+
+    <!-- 처음 오는 학생 -->
+    <div id="m-new">
+      <p class="m-tag">시작하기 전에</p>
+      <h2 id="m-title">누구인지 먼저 알려주세요</h2>
+      <p class="m-sub">연습 기록이 <b>선생님께 전달</b>됩니다. 한 번만 입력하면 계속 기억합니다.</p>
+
+      <div class="m-fields">
+        <label class="m-f" id="m-class-wrap">
+          <span>반</span>
+          <select id="m-class"><option value="">선택</option></select>
+        </label>
+        <label class="m-f" id="m-no-wrap">
+          <span>학번</span>
+          <input id="m-no" type="text" maxlength="8" inputmode="numeric" placeholder="10315" autocomplete="off">
+        </label>
+        <label class="m-f">
+          <span>이름</span>
+          <input id="m-name" type="text" maxlength="12" placeholder="홍길동" autocomplete="off">
+        </label>
+      </div>
+
+      <p class="m-err" id="m-err"></p>
+      <button class="btn pri m-go" id="m-start" type="button">시작하기</button>
+      <button class="m-skip" id="m-skip" type="button">그냥 연습만 할게요 (기록은 전달되지 않습니다)</button>
+    </div>
+
+    <!-- 앞사람 정보가 남아 있을 때 -->
+    <div id="m-back" hidden>
+      <p class="m-tag">본인 확인</p>
+      <h2>이 정보가 맞나요?</h2>
+      <p class="m-who" id="m-who"></p>
+      <p class="m-sub">이 컴퓨터를 앞 시간에 다른 학생이 썼을 수 있습니다.</p>
+
+      <button class="btn pri m-go" id="m-yes" type="button">네, 저예요 — 시작하기</button>
+      <button class="m-skip" id="m-no-me" type="button">아니요, 다른 사람이에요</button>
+    </div>
+
+  </div>
+</div>
+
 <div class="wrap">
 
   <header class="top">
@@ -30,14 +73,6 @@
         <input id="who" type="text" maxlength="12" placeholder="홍길동" autocomplete="off" spellcheck="false">
       </span>
       <span class="whohint" id="whohint">한 번만 입력하면 계속 기억합니다</span>
-    </div>
-
-    <div class="confirm-bar" id="confirm-bar" hidden>
-      <span class="cb-q">이 컴퓨터에 <b id="cb-name"></b> 님의 정보가 남아 있습니다. 본인이 맞나요?</span>
-      <span class="cb-act">
-        <button class="btn pri" id="cb-yes" type="button">네, 저예요</button>
-        <button class="btn" id="cb-no" type="button">아니요, 다른 사람이에요</button>
-      </span>
     </div>
   </header>
 

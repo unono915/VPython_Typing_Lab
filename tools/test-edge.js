@@ -36,69 +36,93 @@ function boot(opts) {
   return { window, d, $, cur, type, finish, sent };
 }
 
-/* ── 1. 공용 PC: 앞 시간 학생 이름이 그대로 남는다 ── */
-console.log('\n── 1. 공용 PC · 앞 사람 이름 잔류 ──');
+/* ── 1. 공용 PC: 시작 모달이 신원을 먼저 받는다 ── */
+console.log('\n── 1. 시작 모달 · 앞 사람 정보가 남아 있을 때 ──');
 {
-  const yesterday = new Date(Date.now() - 26 * 3600e3).toISOString();
   const { $, finish, sent } = boot({
-    seed: { name: '앞반학생', cls: '1-2', no: '10201', best: {}, records: [{ lv: '낱말', grade: 'B', kpm: 100, acc: 90, at: yesterday }], badges: {}, cleared: {} }
+    seed: { name: '앞반학생', cls: '1-2', no: '10201', best: {}, records: [], badges: {}, cleared: {} }
   });
-  ok('본인 확인 바 표시', $('confirm-bar').hidden === false);
-  ok('확인 바에 이전 이름 안내', $('cb-name').textContent.includes('앞반학생'), $('cb-name').textContent);
+  ok('모달이 떠 있음', $('modal').hidden === false);
+  ok('본인 확인 모드', $('m-back').hidden === false && $('m-new').hidden === true);
+  ok('이전 정보를 보여줌', $('m-who').textContent.includes('앞반학생'), $('m-who').textContent);
   finish();
   ok('확인 전에는 전송하지 않음', sent.length === 0, sent.length + '건');
   ok('안내 메시지 표시', $('sync-msg').textContent.includes('본인 확인'), $('sync-msg').textContent);
 }
 
-console.log('\n── 1-1. "아니요, 다른 사람이에요" ──');
+console.log('\n── 1-1. "네, 저예요" ──');
 {
   const b = boot({ seed: { name: '앞반학생', cls: '1-2', no: '10201', best: {}, records: [], badges: {}, cleared: {} } });
-  b.$('cb-no').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
-  ok('이름 비워짐', b.$('who').value === '');
-  ok('학번 비워짐', b.$('wno').value === '');
-  ok('반은 유지 (같은 교실이므로)', b.$('wclass').value === '1-2', b.$('wclass').value);
-  ok('확인 바 사라짐', b.$('confirm-bar').hidden === true);
+  b.$('m-yes').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
+  ok('모달 닫힘', b.$('modal').hidden === true);
   b.finish();
-  ok('이름이 없으니 전송 안 함', b.sent.length === 0, b.sent.length + '건');
-}
-
-console.log('\n── 1-2. "네, 저예요" ──');
-{
-  const b = boot({ seed: { name: '앞반학생', cls: '1-2', no: '10201', best: {}, records: [], badges: {}, cleared: {} } });
-  b.$('cb-yes').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
-  ok('확인 바 사라짐', b.$('confirm-bar').hidden === true);
-  b.finish();
-  ok('확인 후에는 전송됨', b.sent.length === 1, b.sent.length + '건');
+  ok('전송됨', b.sent.length === 1, b.sent.length + '건');
   ok('이름이 정확히 전달', b.sent.length && b.sent[0].body[0].student_name === '앞반학생');
 }
 
-console.log('\n── 1-3. 이름을 직접 고치면 확인으로 친다 ──');
+console.log('\n── 1-2. "아니요, 다른 사람이에요" ──');
 {
   const b = boot({ seed: { name: '앞반학생', cls: '1-2', no: '10201', best: {}, records: [], badges: {}, cleared: {} } });
-  b.$('who').value = '새학생';
-  b.$('who').dispatchEvent(new b.window.Event('input', { bubbles: true }));
-  ok('확인 바 사라짐', b.$('confirm-bar').hidden === true);
-  b.finish();
-  ok('새 이름으로 전송', b.sent.length && b.sent[0].body[0].student_name === '새학생',
-     b.sent.length ? b.sent[0].body[0].student_name : '(없음)');
+  b.$('m-no-me').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
+  ok('모달이 입력 모드로 바뀜', b.$('m-new').hidden === false && b.$('m-back').hidden === true);
+  ok('모달은 계속 떠 있음', b.$('modal').hidden === false);
+  ok('이름 비워짐', b.$('m-name').value === '' && b.$('who').value === '');
+  ok('반은 유지 (같은 교실)', b.$('m-class').value === '1-2', b.$('m-class').value);
 }
 
-console.log('\n── 1-4. 저장된 이름이 없으면 확인 바 없음 ──');
+console.log('\n── 1-3. 처음 오는 학생 · 입력 검증 ──');
 {
   const b = boot();
-  ok('확인 바 숨김', b.$('confirm-bar').hidden === true);
-}
+  ok('모달이 떠 있음', b.$('modal').hidden === false);
+  ok('입력 모드', b.$('m-new').hidden === false);
 
-console.log('\n── 1-5. 이름 공백 정규화 ──');
-{
-  const b = boot();
-  b.$('who').value = '  김  민준  ';
-  b.$('who').dispatchEvent(new b.window.Event('input', { bubbles: true }));
-  b.$('wclass').value = b.$('wclass').options[1].value;
-  b.$('wclass').dispatchEvent(new b.window.Event('change', { bubbles: true }));
+  b.$('m-start').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
+  ok('반 없이 시작 불가', b.$('modal').hidden === false && b.$('m-err').textContent.includes('반'),
+     b.$('m-err').textContent);
+
+  b.$('m-class').value = b.$('m-class').options[1].value;
+  b.$('m-start').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
+  ok('이름 없이 시작 불가', b.$('modal').hidden === false && b.$('m-err').textContent.includes('이름'),
+     b.$('m-err').textContent);
+
+  b.$('m-name').value = '  김  민준  ';
+  b.$('m-no').value = '10315';
+  b.$('m-start').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
+  ok('둘 다 채우면 시작됨', b.$('modal').hidden === true);
+  ok('상단 입력칸에도 반영', b.$('who').value === '김 민준' && b.$('wno').value === '10315',
+     b.$('who').value + ' / ' + b.$('wno').value);
+
   b.finish();
-  ok('앞뒤·중복 공백 정리', b.sent.length && b.sent[0].body[0].student_name === '김 민준',
+  ok('전송됨', b.sent.length === 1);
+  ok('이름 공백 정규화', b.sent.length && b.sent[0].body[0].student_name === '김 민준',
      b.sent.length ? JSON.stringify(b.sent[0].body[0].student_name) : '(없음)');
+}
+
+console.log('\n── 1-4. Enter 로 제출 ──');
+{
+  const b = boot();
+  b.$('m-class').value = b.$('m-class').options[1].value;
+  b.$('m-name').value = '이서연';
+  b.$('m-name').dispatchEvent(new b.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+  ok('Enter 로 시작', b.$('modal').hidden === true);
+}
+
+console.log('\n── 1-5. "그냥 연습만 할게요" ──');
+{
+  const b = boot();
+  b.$('m-skip').dispatchEvent(new b.window.MouseEvent('click', { bubbles: true }));
+  ok('모달 닫힘', b.$('modal').hidden === true);
+  b.finish();
+  ok('연습은 정상 완주', b.$('result').classList.contains('on'));
+  ok('기록은 전송 안 함', b.sent.length === 0, b.sent.length + '건');
+}
+
+console.log('\n── 1-6. 모달이 떠 있는 동안 타이핑이 새지 않는다 ──');
+{
+  const b = boot();
+  b.d.dispatchEvent(new b.window.KeyboardEvent('keydown', { key: 's', bubbles: true }));
+  ok('연습칸으로 포커스가 넘어가지 않음', b.d.activeElement !== b.$('field'),
+     b.d.activeElement && b.d.activeElement.id);
 }
 
 /* ── 2. 이름에 공백만 입력 ── */
